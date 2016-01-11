@@ -5,6 +5,7 @@ import android.os.SystemClock;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -74,12 +75,22 @@ public class MainActivity extends AppCompatActivity {
 
     }
     //Handles Viewflip
-    public void goBack(View view) {
+    public void goBack() {
         viewFlipper.setInAnimation(this, R.anim.slide_in_from_left);
 
         viewFlipper.setOutAnimation(this, R.anim.slide_out_to_right);
 
         viewFlipper.showPrevious();
+    }
+    //user press back on running activity
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            goBack();
+            return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
     }
     //handles when the user presses start
     public void startPauseRun(View view) {
@@ -117,3 +128,5 @@ public class MainActivity extends AppCompatActivity {
         isPaused=false;
     }
 }
+//checkout https://github.com/mikepenz/MaterialDrawer
+//http://blog.sqisland.com/2015/01/partial-slidingpanelayout.html
