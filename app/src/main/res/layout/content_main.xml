@@ -10,8 +10,9 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.simpleapps.amg.myrunningapp.MainActivity"
-    tools:showIn="@layout/activity_main"
+    tools:showIn="@layout/activity_nav_draw"
     android:weightSum="1"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
     android:transitionGroup="false">
 
     <ViewFlipper
@@ -19,9 +20,7 @@
         android:layout_height="0dp"
         android:id="@+id/viewFlipper"
         android:layout_weight="1"
-        android:layout_marginTop="50dp"
         android:layout_gravity="center">
-
 
 
         <LinearLayout
@@ -88,7 +87,6 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/dchronometer"
                 android:textSize="75sp"
-                android:text="0"
                 android:layout_gravity="center_horizontal"
                 android:format="%s"
                 />

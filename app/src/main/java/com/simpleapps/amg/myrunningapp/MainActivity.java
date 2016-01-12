@@ -1,8 +1,15 @@
 package com.simpleapps.amg.myrunningapp;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
@@ -13,30 +20,82 @@ import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.ViewFlipper;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.Calendar;
+
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     Button beginButton;
     Button startButton;
     Button stopButton;
     ViewFlipper viewFlipper;
     Chronometer chronometer;
-    boolean isRunning=false;
-    boolean isPaused=false;
-    long timeStopped=0;
+    boolean isRunning = false;
+    boolean isPaused = false;
+    long timeStopped = 0;
+    boolean firstTime = true;
+    SQLiteDatabase historyDB = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_nav_draw);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        beginButton=(Button)findViewById(R.id.beginButton);
-        startButton=(Button)findViewById(R.id.startPauseButton);
-        stopButton=(Button)findViewById(R.id.stopButton);
+        initializeComponents();
 
-        viewFlipper=(ViewFlipper)findViewById(R.id.viewFlipper);
-        chronometer=(Chronometer)findViewById(R.id.dchronometer);
+        retrieveData(savedInstanceState);
 
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        if (firstTime) {
+            firstTime = false;
+            createDatabase();
+
+        }
     }
+
+    private void createDatabase() {
+        try {
+            historyDB = this.openOrCreateDatabase("HistoryDB", MODE_PRIVATE, null);
+            historyDB.execSQL("CREATE TABLE IF NOT EXISTS history " + "(id integer primary key, date DATATIME,time NCHAR);");
+            //File database=getApplicationContext().getDatabasePath("HistoryDB");
+        } catch (Exception e) {
+
+        }
+    }
+
+    //@TODO move this to other class
+    private void addEntry(String time) {
+        Calendar calendar = Calendar.getInstance();
+        int month = calendar.get(Calendar.MONTH) + 1;
+        String hour;
+        String minute;
+        if (calendar.get(Calendar.HOUR_OF_DAY) < 10) {
+            hour = "0" + calendar.get(Calendar.HOUR_OF_DAY);
+        } else {
+            hour = calendar.get(Calendar.HOUR_OF_DAY) + "";
+        }
+        if (calendar.get(Calendar.MINUTE) < 10) {
+            minute = "0" + calendar.get(Calendar.MINUTE);
+        } else {
+            minute = "" + calendar.get(Calendar.MINUTE);
+        }
+        String dateOfRun = hour + ":" + minute + "" + "  " + calendar.get(Calendar.DAY_OF_MONTH) + "/" +
+                month + "/" + calendar.get(Calendar.YEAR) + " ";
+        time = time + " s";
+
+        historyDB.execSQL("INSERT INTO history (date,time) VALUES ('" + dateOfRun + "','" + time + "');");
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -51,13 +110,13 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
 
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_lock) {
+
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
-
 
 
     //Handles the flipview
@@ -74,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
         viewFlipper.showNext();
 
     }
+
     //Handles Viewflip
     public void goBack() {
         viewFlipper.setInAnimation(this, R.anim.slide_in_from_left);
@@ -82,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
 
         viewFlipper.showPrevious();
     }
+
     //user press back on running activity
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -92,30 +153,28 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onKeyDown(keyCode, event);
     }
+
     //handles when the user presses start
     public void startPauseRun(View view) {
-        if(!isRunning)
-        {
+        if (!isRunning) {
 
-            if(!isPaused){
+            if (!isPaused) {
                 chronometer.setBase(SystemClock.elapsedRealtime());
-            }else if(isPaused){
-                chronometer.setBase(chronometer.getBase()+SystemClock.elapsedRealtime()-timeStopped);
+            } else if (isPaused) {
+                chronometer.setBase(chronometer.getBase() + SystemClock.elapsedRealtime() - timeStopped);
             }
             chronometer.start();
-            startButton.setBackgroundColor(ContextCompat.getColor(this,R.color.materialYellow));
+            startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialYellow));
             startButton.setText(R.string.pause_button);
-            isRunning=true;
-            isPaused=false;
-        }
-        else if(isRunning)
-        {
+            isRunning = true;
+            isPaused = false;
+        } else if (isRunning) {
             chronometer.stop();
-            timeStopped=SystemClock.elapsedRealtime();
+            timeStopped = SystemClock.elapsedRealtime();
             startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
             startButton.setText(R.string.start_button);
-            isRunning=false;
-            isPaused=true;
+            isRunning = false;
+            isPaused = true;
         }
     }
 
@@ -124,9 +183,62 @@ public class MainActivity extends AppCompatActivity {
         chronometer.stop();
         startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
         startButton.setText(R.string.start_button);
-        isRunning=false;
-        isPaused=false;
+        isRunning = false;
+        isPaused = false;
+        addEntry(String.valueOf(SystemClock.elapsedRealtime() - chronometer.getBase()));
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.nav_history) {
+            Intent openHistory = new Intent(this, HistoryActivity.class);
+            startActivity(openHistory);
+        } else if (id == R.id.nav_manage) {
+
+        }
+        return true;
+    }
+
+    private void initializeComponents() {
+        beginButton = (Button) findViewById(R.id.beginButton);
+        startButton = (Button) findViewById(R.id.startPauseButton);
+        stopButton = (Button) findViewById(R.id.stopButton);
+
+        viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
+        chronometer = (Chronometer) findViewById(R.id.dchronometer);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean("firstTime", firstTime);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onStop() {
+        saveSettings();
+        super.onStop();
+    }
+
+    protected void saveSettings() {
+        SharedPreferences sp = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor spEditor = sp.edit();
+        spEditor.putBoolean("firstTime", firstTime);
+
+        spEditor.commit();
+    }
+
+    private void retrieveData(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            firstTime = savedInstanceState.getBoolean("firstTime");
+
+        }
+
     }
 }
 //checkout https://github.com/mikepenz/MaterialDrawer
 //http://blog.sqisland.com/2015/01/partial-slidingpanelayout.html
+//https://github.com/michelelacorte/ScrollableAppBar
+//https://github.com/daimajia/AndroidSwipeLayout
