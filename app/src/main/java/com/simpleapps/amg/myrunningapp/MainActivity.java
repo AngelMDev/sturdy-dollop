@@ -96,21 +96,30 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         historyDB.execSQL("INSERT INTO history (date,time) VALUES ('" + dateOfRun + "','" + time + "');");
     }
 
-
+     MenuItem actionLock=null;
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        actionLock=menu.findItem(R.id.action_lock);
         return true;
     }
-
+    boolean lockState=false;
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         int id = item.getItemId();
 
 
+
         if (id == R.id.action_lock) {
+            if (!lockState) {
+                actionLock.setIcon(R.drawable.ic_lock_open_black_24dp);
+                lockState=true;
+            }else{
+                actionLock.setIcon(R.drawable.ic_lock_black_24dp);
+                lockState=false;
+            }
 
             return true;
         }
