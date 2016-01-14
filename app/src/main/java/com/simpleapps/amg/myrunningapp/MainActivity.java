@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
@@ -18,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Chronometer;
+import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import java.util.Calendar;
@@ -28,11 +30,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     Button stopButton;
     ViewFlipper viewFlipper;
     Chronometer chronometer;
+    TextView chronoTextView;
     boolean isRunning = false;
     boolean isPaused = false;
     long timeStopped = 0;
     boolean firstTime = true;
     SQLiteDatabase historyDB = null;
+    Handler Chronohandler;
+    View topLevelLayout;
+    //@TODO organize variables
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +51,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         initializeComponents();
 
         retrieveData(savedInstanceState);
+        Chronohandler=new Handler();
+
+
 
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -116,8 +125,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (!lockState) {
                 actionLock.setIcon(R.drawable.ic_lock_open_black_24dp);
                 lockState=true;
+                beginButton.setClickable(false);
+                startButton.setClickable(false);
+                stopButton.setClickable(false);
+                topLevelLayout.setVisibility(View.VISIBLE);
             }else{
                 actionLock.setIcon(R.drawable.ic_lock_black_24dp);
+                beginButton.setClickable(true);
+                startButton.setClickable(true);
+                stopButton.setClickable(true);
+                topLevelLayout.setVisibility(View.INVISIBLE);
                 lockState=false;
             }
 
@@ -162,7 +179,34 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         return super.onKeyDown(keyCode, event);
     }
+    double chronoBase=0d;
+    double chronoCurrent=0d;
+    double ms=0d;
+    double s=0d;
+    double m=0d;
+    double h=0d;
+    double cms=0d;
+    final Runnable updateChrono=new Runnable() {
+        @Override
+        public void run() {
+            chronoCurrent=SystemClock.elapsedRealtime();
+            ms=chronoCurrent-chronoBase-cms;
+            if(ms>999){
+                s++;
+                cms=1000;
+            }
+            if(s>59){
+                m++;
+                s=0;
+            }
+            if(m>59){
+                h++;
+                m=0;
+            }
+            chronoTextView.setText(h+":"+m+":"+s+":"+ms);
 
+        }
+    };
     //handles when the user presses start
     public void startPauseRun(View view) {
         if (!isRunning) {
@@ -177,6 +221,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             startButton.setText(R.string.pause_button);
             isRunning = true;
             isPaused = false;
+            //---------------
+            chronoBase=SystemClock.elapsedRealtime();
+            Chronohandler.post(updateChrono);
         } else if (isRunning) {
             chronometer.stop();
             timeStopped = SystemClock.elapsedRealtime();
@@ -214,9 +261,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         beginButton = (Button) findViewById(R.id.beginButton);
         startButton = (Button) findViewById(R.id.startPauseButton);
         stopButton = (Button) findViewById(R.id.stopButton);
-
+        topLevelLayout = findViewById(R.id.top_layout);
+        topLevelLayout.setVisibility(View.INVISIBLE);
         viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
         chronometer = (Chronometer) findViewById(R.id.dchronometer);
+        chronoTextView=(TextView) findViewById(R.id.chronoTextView);
     }
 
     @Override

@@ -5,22 +5,21 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="0dp"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
+    android:paddingTop="0dp"
     tools:context="com.simpleapps.amg.myrunningapp.MainActivity"
     tools:showIn="@layout/activity_nav_draw"
     android:weightSum="1"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     android:transitionGroup="false">
-
+<!-- -->
     <ViewFlipper
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/viewFlipper"
         android:layout_gravity="center">
-
 
 
         <LinearLayout
@@ -82,14 +81,15 @@
                 android:textSize="25sp"
                 android:id="@+id/displayTimeElapsedTV" />
 
-            <Chronometer
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/dchronometer"
-                android:textSize="75sp"
-                android:layout_gravity="center_horizontal"
-                android:format="%s"
-                />
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="0:00:00:000"
+                android:id="@+id/chronoTextView"
+                android:textSize="50sp"
+                android:layout_gravity="center_horizontal" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -149,7 +149,26 @@
 
             </LinearLayout>
 
+            <Chronometer
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/dchronometer"
+                android:textSize="75sp"
+                android:format="%s"
+                />
+
         </LinearLayout>
     </ViewFlipper>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#be616161"
+        android:id="@+id/top_layout">
+
+        <!--Put the parts of the layout here,
+        what should be on top of your activity-->
+
+    </LinearLayout>
 
 </FrameLayout>

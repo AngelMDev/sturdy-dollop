@@ -21,7 +21,7 @@ public class HistoryActivity extends AppCompatActivity {
         }
         getEntries();
     }
-
+//@TODO show entries more elegantly
     private void getEntries() {
         Cursor cursor = historyDB.rawQuery("SELECT * FROM history", null);
         int idColumn = cursor.getColumnIndex("id");
