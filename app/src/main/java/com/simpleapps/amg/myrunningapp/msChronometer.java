@@ -71,7 +71,6 @@ public class msChronometer extends TextView {
     }
 
     public void start() {
-        mBase = SystemClock.elapsedRealtime();
         mStarted = true;
         updateRunning();
     }

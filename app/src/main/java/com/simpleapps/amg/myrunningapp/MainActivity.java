@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.SystemClock;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
@@ -13,12 +12,12 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import java.util.Calendar;
@@ -29,13 +28,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     Button stopButton;
     ViewFlipper viewFlipper;
     msChronometer chronometer;
-    TextView chronoTextView=null;
     boolean isRunning = false;
     boolean isPaused = false;
     long timeStopped = 0;
     boolean firstTime = true;
     SQLiteDatabase historyDB = null;
-    Handler Chronohandler;
     View topLevelLayout;
     //@TODO organize variables
 
@@ -50,9 +47,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         initializeComponents();
 
         retrieveData(savedInstanceState);
-        Chronohandler=new Handler();
-
-
 
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -104,37 +98,39 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         historyDB.execSQL("INSERT INTO history (date,time) VALUES ('" + dateOfRun + "','" + time + "');");
     }
 
-     MenuItem actionLock=null;
+    MenuItem actionLock = null;
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        actionLock=menu.findItem(R.id.action_lock);
+        actionLock = menu.findItem(R.id.action_lock);
         return true;
     }
-    boolean lockState=false;
+
+    boolean lockState = false;
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         int id = item.getItemId();
 
 
-
         if (id == R.id.action_lock) {
             if (!lockState) {
                 actionLock.setIcon(R.drawable.ic_lock_open_black_24dp);
-                lockState=true;
+                lockState = true;
                 beginButton.setClickable(false);
                 startButton.setClickable(false);
                 stopButton.setClickable(false);
                 topLevelLayout.setVisibility(View.VISIBLE);
-            }else{
+            } else {
                 actionLock.setIcon(R.drawable.ic_lock_black_24dp);
                 beginButton.setClickable(true);
                 startButton.setClickable(true);
                 stopButton.setClickable(true);
                 topLevelLayout.setVisibility(View.INVISIBLE);
-                lockState=false;
+                lockState = false;
             }
 
             return true;
@@ -178,53 +174,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         return super.onKeyDown(keyCode, event);
     }
-    long chronoBase=0;
-    long chronoCurrent=0;
-    long ms=0;
-    int s=0;
-    int m=0;
-    int h=0;
-    int cms=0;
-    final Runnable updateChrono=new Runnable() {
-        @Override
-        public void run() {
-            //android.os.Process.setThreadPriority(-15);
-            chronoCurrent=SystemClock.elapsedRealtime();
-            ms=chronoCurrent-chronoBase;
-            if(ms>999){
-                s++;
-                chronoBase=SystemClock.elapsedRealtime();
-            }
-            if(s>59){
-                m++;
-                s=0;
-            }
-            if(m>59){
-                h++;
-                m=0;
-            }
-            //chronoTextView.setText(h+":"+m+":"+s+":"+ms);
-            Chronohandler.postDelayed(this, 25);
 
-        }
-    };
+//TODO move to msChronometer
     //handles when the user presses start
     public void startPauseRun(View view) {
         if (!isRunning) {
 
             if (!isPaused) {
                 chronometer.setBase(SystemClock.elapsedRealtime());
+                isPaused = false;
             } else if (isPaused) {
-                chronometer.setBase(chronometer.getBase() + SystemClock.elapsedRealtime() - timeStopped);
+                chronometer.setBase(SystemClock.elapsedRealtime()+(chronometer.getBase()) - timeStopped);
+                Log.d("Paused", "Paused");
             }
             chronometer.start();
             startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialYellow));
             startButton.setText(R.string.pause_button);
             isRunning = true;
-            isPaused = false;
-            //---------------
-            chronoBase=SystemClock.elapsedRealtime();
-            Chronohandler.post(updateChrono);
+
         } else if (isRunning) {
             chronometer.stop();
             timeStopped = SystemClock.elapsedRealtime();
@@ -234,10 +201,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             isPaused = true;
         }
     }
-
+    //TODO move to msChronometer
     public void stopRun(View view) {
-        chronometer.setBase(SystemClock.elapsedRealtime());
         chronometer.stop();
+        chronometer.setBase(SystemClock.elapsedRealtime());
         startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
         startButton.setText(R.string.start_button);
         isRunning = false;
@@ -252,6 +219,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (id == R.id.nav_history) {
             Intent openHistory = new Intent(this, HistoryActivity.class);
             startActivity(openHistory);
+
         } else if (id == R.id.nav_manage) {
 
         }
@@ -286,13 +254,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreferences.Editor spEditor = sp.edit();
         spEditor.putBoolean("firstTime", firstTime);
 
-        spEditor.commit();
+        spEditor.apply();
     }
 
     private void retrieveData(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             firstTime = savedInstanceState.getBoolean("firstTime");
-
         }
 
     }
