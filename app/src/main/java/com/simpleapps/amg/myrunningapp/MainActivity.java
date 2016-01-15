@@ -18,7 +18,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Chronometer;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
@@ -29,8 +28,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     Button startButton;
     Button stopButton;
     ViewFlipper viewFlipper;
-    Chronometer chronometer;
-    TextView chronoTextView;
+    msChronometer chronometer;
+    TextView chronoTextView=null;
     boolean isRunning = false;
     boolean isPaused = false;
     long timeStopped = 0;
@@ -179,21 +178,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         return super.onKeyDown(keyCode, event);
     }
-    double chronoBase=0d;
-    double chronoCurrent=0d;
-    double ms=0d;
-    double s=0d;
-    double m=0d;
-    double h=0d;
-    double cms=0d;
+    long chronoBase=0;
+    long chronoCurrent=0;
+    long ms=0;
+    int s=0;
+    int m=0;
+    int h=0;
+    int cms=0;
     final Runnable updateChrono=new Runnable() {
         @Override
         public void run() {
+            //android.os.Process.setThreadPriority(-15);
             chronoCurrent=SystemClock.elapsedRealtime();
-            ms=chronoCurrent-chronoBase-cms;
+            ms=chronoCurrent-chronoBase;
             if(ms>999){
                 s++;
-                cms=1000;
+                chronoBase=SystemClock.elapsedRealtime();
             }
             if(s>59){
                 m++;
@@ -203,7 +203,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 h++;
                 m=0;
             }
-            chronoTextView.setText(h+":"+m+":"+s+":"+ms);
+            //chronoTextView.setText(h+":"+m+":"+s+":"+ms);
+            Chronohandler.postDelayed(this, 25);
 
         }
     };
@@ -264,8 +265,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         topLevelLayout = findViewById(R.id.top_layout);
         topLevelLayout.setVisibility(View.INVISIBLE);
         viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
-        chronometer = (Chronometer) findViewById(R.id.dchronometer);
-        chronoTextView=(TextView) findViewById(R.id.chronoTextView);
+        chronometer = (msChronometer) findViewById(R.id.dchronometer);
+
     }
 
     @Override

@@ -81,14 +81,13 @@
                 android:textSize="25sp"
                 android:id="@+id/displayTimeElapsedTV" />
 
-            <TextView
+            <com.simpleapps.amg.myrunningapp.msChronometer
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:text="0:00:00:000"
-                android:id="@+id/chronoTextView"
-                android:textSize="50sp"
-                android:layout_gravity="center_horizontal" />
+                android:id="@+id/dchronometer"
+                android:textSize="75sp"
+                android:layout_gravity="center_horizontal"
+                />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -149,13 +148,7 @@
 
             </LinearLayout>
 
-            <Chronometer
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/dchronometer"
-                android:textSize="75sp"
-                android:format="%s"
-                />
+
 
         </LinearLayout>
     </ViewFlipper>
