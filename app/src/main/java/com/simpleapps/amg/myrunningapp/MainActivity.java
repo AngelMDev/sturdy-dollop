@@ -188,7 +188,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void stopRun(View view) {
-        chronometer.setBase(SystemClock.elapsedRealtime());
         chronometer.stop();
         startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
         startButton.setText(R.string.start_button);
