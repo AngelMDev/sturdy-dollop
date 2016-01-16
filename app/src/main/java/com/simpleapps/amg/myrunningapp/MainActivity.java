@@ -1,12 +1,16 @@
 package com.simpleapps.amg.myrunningapp;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -18,11 +22,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
-
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity
+        extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener, ConnectionCallbacks, OnConnectionFailedListener, LocationListener {
+
     Button beginButton;
     Button startButton;
     Button stopButton;
@@ -32,12 +47,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     boolean isPaused = false;
     long timeStopped = 0;
     boolean firstTime = true;
+    private GoogleApiClient mGoogleApiClient;
+    Location mLastLocation;
+    int LOCATION_PERMISSION_CODE=10;
+    LocationRequest mLocationRequest;
+    TextView speedTextView;
+
     SQLiteDatabase historyDB = null;
     View topLevelLayout;
     //@TODO organize variables
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
+        createApiInstance();
+        mGoogleApiClient.connect();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nav_draw);
 
@@ -64,6 +89,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         }
     }
+
+    private void createApiInstance() {
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+    }
+
 
     private void createDatabase() {
         try {
@@ -143,15 +179,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     //Handles the flipview
     public void goRight(View view) {
 // Next screen comes in from left.
+        if(mLastLocation.getAccuracy()<15.0) {
+            viewFlipper.setInAnimation(this, R.anim.slide_in_from_right);
 
-        viewFlipper.setInAnimation(this, R.anim.slide_in_from_right);
+            // Current screen goes out from right.
 
-        // Current screen goes out from right.
+            viewFlipper.setOutAnimation(this, R.anim.slide_out_to_left);
 
-        viewFlipper.setOutAnimation(this, R.anim.slide_out_to_left);
+            // Display next screen.
+            viewFlipper.showNext();
+        }else{
 
-        // Display next screen.
-        viewFlipper.showNext();
+        }
 
     }
 
@@ -234,18 +273,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         topLevelLayout.setVisibility(View.INVISIBLE);
         viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
         chronometer = (msChronometer) findViewById(R.id.dchronometer);
-
+        speedTextView=(TextView) findViewById(R.id.speedTV);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putBoolean("firstTime", firstTime);
         super.onSaveInstanceState(outState);
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                mGoogleApiClient, this);
+
     }
 
     @Override
     protected void onStop() {
         saveSettings();
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                mGoogleApiClient, this);
+
         super.onStop();
     }
 
@@ -260,6 +305,60 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void retrieveData(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             firstTime = savedInstanceState.getBoolean("firstTime");
+        }
+
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        if ( ContextCompat.checkSelfPermission( this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED ) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},LOCATION_PERMISSION_CODE);
+            }
+        }
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                mGoogleApiClient);
+        createLocationRequest();
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        Log.d("LOCATION", "Requesting");
+        }
+
+
+    protected void createLocationRequest() {
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(2500);
+        mLocationRequest.setFastestInterval(1000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        Log.d("LOCATION", "createLocationRequest");
+    }
+
+
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        mLastLocation=location;
+        Log.d("LOCATION", "onLocationChangedCalled");
+
+        if(mLastLocation.getAccuracy()<20.0) {
+            speedTextView.setText(String.valueOf(mLastLocation.getSpeed()) + " m/s");
+        }
+        else{
+            speedTextView.setText("- m/s");
+            Toast.makeText(this,"GPS accuracy not enough",Toast.LENGTH_SHORT).show();
         }
 
     }
