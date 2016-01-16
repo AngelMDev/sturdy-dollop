@@ -52,6 +52,7 @@ public class MainActivity
     int LOCATION_PERMISSION_CODE=10;
     LocationRequest mLocationRequest;
     TextView speedTextView;
+    TextView accuracyTextView;
 
     SQLiteDatabase historyDB = null;
     View topLevelLayout;
@@ -179,7 +180,7 @@ public class MainActivity
     //Handles the flipview
     public void goRight(View view) {
 // Next screen comes in from left.
-        if(mLastLocation.getAccuracy()<15.0) {
+
             viewFlipper.setInAnimation(this, R.anim.slide_in_from_right);
 
             // Current screen goes out from right.
@@ -188,9 +189,6 @@ public class MainActivity
 
             // Display next screen.
             viewFlipper.showNext();
-        }else{
-
-        }
 
     }
 
@@ -274,6 +272,7 @@ public class MainActivity
         viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
         chronometer = (msChronometer) findViewById(R.id.dchronometer);
         speedTextView=(TextView) findViewById(R.id.speedTV);
+        accuracyTextView=(TextView) findViewById(R.id.displayAccuracyTV);
     }
 
     @Override
@@ -352,14 +351,22 @@ public class MainActivity
     public void onLocationChanged(Location location) {
         mLastLocation=location;
         Log.d("LOCATION", "onLocationChangedCalled");
-
-        if(mLastLocation.getAccuracy()<20.0) {
+        accuracyTextView.setText(String.valueOf(mLastLocation.getAccuracy()));
+        float accuracy=mLastLocation.getAccuracy();
+        if(accuracy<20.0) {
             speedTextView.setText(String.valueOf(mLastLocation.getSpeed()) + " m/s");
+            if(accuracy<10){
+                beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
+                beginButton.setClickable(true);
+            }
         }
         else{
             speedTextView.setText("- m/s");
             Toast.makeText(this,"GPS accuracy not enough",Toast.LENGTH_SHORT).show();
+            beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGray));
+            beginButton.setClickable(false);
         }
+
 
     }
 }

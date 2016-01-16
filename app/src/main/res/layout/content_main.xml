@@ -62,7 +62,7 @@
                 android:text="@string/begin_button"
                 android:id="@+id/beginButton"
                 android:layout_gravity="center_horizontal"
-                android:background="@color/materialGreen"
+                android:background="@color/materialGray"
                 android:textSize="25sp"
                 android:onClick="goRight"/>
 
@@ -88,6 +88,15 @@
                 android:textSize="75sp"
                 android:layout_gravity="center_horizontal"
                 />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="accuracy"
+                android:textSize="15sp"
+                android:id="@+id/displayAccuracyTV" />
+
 
             <TextView
                 android:layout_width="wrap_content"

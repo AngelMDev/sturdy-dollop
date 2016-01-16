@@ -6,4 +6,5 @@
     <color name="materialRed">#d50000</color>
     <color name="materialGreen">#7cb342</color>
     <color name="materialYellow">#fbc02d</color>
+    <color name="materialGray">#757575</color>
 </resources>
