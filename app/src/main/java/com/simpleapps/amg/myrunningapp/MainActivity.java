@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -25,6 +26,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
@@ -32,6 +34,7 @@ import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListe
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+
 import java.util.Calendar;
 
 public class MainActivity
@@ -49,14 +52,25 @@ public class MainActivity
     boolean firstTime = true;
     private GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
-    int LOCATION_PERMISSION_CODE=10;
+    Location currentLocation;
+    int LOCATION_PERMISSION_CODE = 10;
     LocationRequest mLocationRequest;
     TextView speedTextView;
     TextView accuracyTextView;
-
+    TextView distanceTextView;
     SQLiteDatabase historyDB = null;
     View topLevelLayout;
-    //@TODO organize variables
+    double distance = 0;
+    float maxSpeed = 0;
+    double avgSpeed = 0;
+    int DISTANCE_TOLERANCE = 10;
+    TextView teoDistance;
+    float speed;
+    double tempDistance = 0;
+    float accuracy;
+    Handler mHandler;
+    Runnable runnable;
+    //@TODO organize variables. distance isnt being reset, check if is running bfore trying to addEntry, maxspeed needs to be reset.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +119,7 @@ public class MainActivity
     private void createDatabase() {
         try {
             historyDB = this.openOrCreateDatabase("HistoryDB", MODE_PRIVATE, null);
-            historyDB.execSQL("CREATE TABLE IF NOT EXISTS history " + "(id integer primary key, date DATATIME,time NCHAR);");
+            historyDB.execSQL("CREATE TABLE IF NOT EXISTS history " + "(id integer primary key, date DATATIME,time NCHAR,distance DOUBLE,max_speed FLOAT);");
             //File database=getApplicationContext().getDatabasePath("HistoryDB");
         } catch (Exception e) {
 
@@ -115,7 +129,7 @@ public class MainActivity
     //@TODO move this to other class
     private void addEntry(String time) {
         Calendar calendar = Calendar.getInstance();
-        int month = calendar.get(Calendar.MONTH) + 1;
+        String month = "" + calendar.get(Calendar.MONTH) + 1;
         String hour;
         String minute;
         if (calendar.get(Calendar.HOUR_OF_DAY) < 10) {
@@ -128,11 +142,16 @@ public class MainActivity
         } else {
             minute = "" + calendar.get(Calendar.MINUTE);
         }
+        if (calendar.get(Calendar.MONTH) == 1) {
+            month = "0" + month;
+        } else {
+            month = "" + month;
+        }
         String dateOfRun = hour + ":" + minute + "" + "  " + calendar.get(Calendar.DAY_OF_MONTH) + "/" +
                 month + "/" + calendar.get(Calendar.YEAR) + " ";
-        time = time + " s";
 
-        historyDB.execSQL("INSERT INTO history (date,time) VALUES ('" + dateOfRun + "','" + time + "');");
+
+        historyDB.execSQL("INSERT INTO history (date,time,distance,max_speed) VALUES ('" + dateOfRun + "','" + time + "','" + distance + "','" + maxSpeed + "');");
     }
 
     MenuItem actionLock = null;
@@ -181,14 +200,14 @@ public class MainActivity
     public void goRight(View view) {
 // Next screen comes in from left.
 
-            viewFlipper.setInAnimation(this, R.anim.slide_in_from_right);
+        viewFlipper.setInAnimation(this, R.anim.slide_in_from_right);
 
-            // Current screen goes out from right.
+        // Current screen goes out from right.
 
-            viewFlipper.setOutAnimation(this, R.anim.slide_out_to_left);
+        viewFlipper.setOutAnimation(this, R.anim.slide_out_to_left);
 
-            // Display next screen.
-            viewFlipper.showNext();
+        // Display next screen.
+        viewFlipper.showNext();
 
     }
 
@@ -212,7 +231,7 @@ public class MainActivity
         return super.onKeyDown(keyCode, event);
     }
 
-//TODO move to msChronometer
+    //TODO move to msChronometer
     //handles when the user presses start
     public void startPauseRun(View view) {
         if (!isRunning) {
@@ -221,32 +240,51 @@ public class MainActivity
                 chronometer.setBase(SystemClock.elapsedRealtime());
                 isPaused = false;
             } else if (isPaused) {
-                chronometer.setBase(SystemClock.elapsedRealtime()+(chronometer.getBase()) - timeStopped);
+                chronometer.setBase(SystemClock.elapsedRealtime() + (chronometer.getBase()) - timeStopped);
                 Log.d("Paused", "Paused");
             }
             chronometer.start();
             startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialYellow));
             startButton.setText(R.string.pause_button);
             isRunning = true;
+            trackDistance();
+
+
+
+            if (accuracy < 20.0) {
+                if (isRunning) {
+                    //TODO move trackDistance here
+                }
+            }
 
         } else if (isRunning) {
             chronometer.stop();
+            mHandler.removeCallbacks(runnable);
             timeStopped = SystemClock.elapsedRealtime();
             startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
             startButton.setText(R.string.start_button);
             isRunning = false;
             isPaused = true;
+
         }
     }
+
     //TODO move to msChronometer
     public void stopRun(View view) {
+        if (chronometer.getTimeElapsed() > 0) {
+            addEntry(String.valueOf(chronometer.getTimeElapsed()));
+        }
         chronometer.stop();
+        mHandler.removeCallbacks(runnable);
         chronometer.setBase(SystemClock.elapsedRealtime());
         startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
         startButton.setText(R.string.start_button);
         isRunning = false;
         isPaused = false;
-        addEntry(String.valueOf(SystemClock.elapsedRealtime() - chronometer.getBase()));
+        maxSpeed = 0;
+        distance = 0;
+        distanceTextView.setText("0m");
+
     }
 
     @Override
@@ -271,8 +309,10 @@ public class MainActivity
         topLevelLayout.setVisibility(View.INVISIBLE);
         viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
         chronometer = (msChronometer) findViewById(R.id.dchronometer);
-        speedTextView=(TextView) findViewById(R.id.speedTV);
-        accuracyTextView=(TextView) findViewById(R.id.displayAccuracyTV);
+        speedTextView = (TextView) findViewById(R.id.speedTV);
+        accuracyTextView = (TextView) findViewById(R.id.displayAccuracyTV);
+        distanceTextView = (TextView) findViewById(R.id.distanceTV);
+        teoDistance = (TextView) findViewById(R.id.displayTeoDistanceTV);
     }
 
     @Override
@@ -281,6 +321,7 @@ public class MainActivity
         super.onSaveInstanceState(outState);
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
+        mHandler.removeCallbacks(runnable);
 
     }
 
@@ -289,7 +330,7 @@ public class MainActivity
         saveSettings();
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
-
+        mHandler.removeCallbacks(runnable);
         super.onStop();
     }
 
@@ -310,21 +351,25 @@ public class MainActivity
 
     @Override
     public void onConnected(Bundle bundle) {
-        if ( ContextCompat.checkSelfPermission( this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED ) {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
             } else {
                 ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},LOCATION_PERMISSION_CODE);
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_CODE);
             }
         }
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
-                mGoogleApiClient);
-        createLocationRequest();
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        Log.d("LOCATION", "Requesting");
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                    mGoogleApiClient);
+            createLocationRequest();
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+            Log.d("LOCATION", "Requesting");
         }
+
+
+    }
 
 
     protected void createLocationRequest() {
@@ -336,7 +381,6 @@ public class MainActivity
     }
 
 
-
     @Override
     public void onConnectionSuspended(int i) {
 
@@ -346,29 +390,90 @@ public class MainActivity
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
+//TODO move to another class and make it have its own thread?
 
     @Override
     public void onLocationChanged(Location location) {
-        mLastLocation=location;
+        currentLocation = location;
+
         Log.d("LOCATION", "onLocationChangedCalled");
-        accuracyTextView.setText(String.valueOf(mLastLocation.getAccuracy()));
-        float accuracy=mLastLocation.getAccuracy();
-        if(accuracy<20.0) {
-            speedTextView.setText(String.valueOf(mLastLocation.getSpeed()) + " m/s");
-            if(accuracy<10){
-                beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
-                beginButton.setClickable(true);
-            }
+        accuracyTextView.setText(String.valueOf(currentLocation.getAccuracy()));
+        accuracy = currentLocation.getAccuracy();
+        speed = currentLocation.getSpeed();
+        tempDistance = calculateDistance(currentLocation, mLastLocation);
+        teoDistance.setText(String.valueOf(tempDistance));
+        calcMaxSpeed(speed);
+        avgSpeed = distance / chronometer.getTimeElapsed();
+
+        String s = String.format("%.2f", distance);
+
+        speedTextView.setText(String.valueOf(speed) + " m/s");
+        distanceTextView.setText(s + "m");
+
+        if (accuracy < 10) {
+            beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
+            beginButton.setClickable(true);
         }
-        else{
+
+        if (accuracy > 20) {
             speedTextView.setText("- m/s");
-            Toast.makeText(this,"GPS accuracy not enough",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "GPS accuracy not enough", Toast.LENGTH_SHORT).show();
             beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGray));
-            beginButton.setClickable(false);
+            beginButton.setClickable(true);//TODO: set to false on release
+            mLastLocation = currentLocation;
         }
 
 
     }
+
+
+
+    private void trackDistance() {
+        mHandler = new Handler();
+         runnable = new Runnable() {
+            @Override
+            public void run() {
+                calcDistance();
+                    mHandler.postDelayed(this, 1000);
+
+            }
+        };
+        mHandler.postDelayed(runnable, 1000);
+
+    }
+
+    private void calcDistance() {
+        if (currentLocation.hasSpeed()) {
+            if (tempDistance <= speed) {
+                distance += tempDistance;
+
+            } else if (tempDistance <= (speed + DISTANCE_TOLERANCE) && tempDistance > speed) {
+                distance += speed;
+            } else if (tempDistance > speed + DISTANCE_TOLERANCE) {
+                distance += avgSpeed;
+            }
+
+        }
+        teoDistance.setText(String.valueOf(tempDistance));
+        Toast.makeText(this, "Thread Running", Toast.LENGTH_SHORT).show();
+    }
+
+    private void calcMaxSpeed(float speed) {
+        if (speed > maxSpeed) {
+            maxSpeed = speed;
+        }
+
+    }
+
+
+    private double calculateDistance(Location current, Location last) {
+        int R = 6371; // km
+        double x = (current.getLongitude() - last.getLongitude()) * Math.cos((current.getLatitude() + last.getLatitude()) / 2);
+        double y = (current.getLatitude() - last.getLatitude());
+        return Math.sqrt(x * x + y * y) * R;
+    }
+
+
 }
 //checkout https://github.com/mikepenz/MaterialDrawer
 //http://blog.sqisland.com/2015/01/partial-slidingpanelayout.html
