@@ -143,6 +143,7 @@ database so that new IDs are applied in each row with a loop(i.e i=0;i<(number r
 */
 
     //@TODO show entries more elegantly
+    //@TODO convert to recyclerview, research how to add an onclick listener
     private void getEntries(String parameter) {
         dbAdapter.createDatabase(this);
         listAdapter = dbAdapter.getEntries(this, parameter);
@@ -158,4 +159,6 @@ database so that new IDs are applied in each row with a loop(i.e i=0;i<(number r
     }
 
 }
+
+
 
