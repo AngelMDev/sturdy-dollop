@@ -82,8 +82,6 @@ public class MainActivity
         setSupportActionBar(toolbar);
         initializeComponents();
         dbAdapter = new DBAdapter();
-        createApiInstance();
-        mGoogleApiClient.connect();
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -100,6 +98,25 @@ public class MainActivity
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        createApiInstance();
+        mGoogleApiClient.connect();
+        Log.d("ON START", "onStart called");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        createLocationRequest();
+        createApiInstance();
+        mGoogleApiClient.connect();
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        }
+    }
+
+    @Override
     protected void onStop() {
         saveSettings();
         LocationServices.FusedLocationApi.removeLocationUpdates(
@@ -109,12 +126,7 @@ public class MainActivity
         super.onStop();
     }
 
-    @Override
-    protected void onStart() {
-        createApiInstance();
-        mGoogleApiClient.connect();
-        super.onStart();
-    }
+
 
     private void createApiInstance() {
         if (mGoogleApiClient == null) {
@@ -321,12 +333,13 @@ public class MainActivity
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean("firstTime", firstTime);
         super.onSaveInstanceState(outState);
+        outState.putBoolean("firstTime", firstTime);
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
         if (runnable != null)
             mHandler.removeCallbacks(runnable);
+        Log.d("ONSAVEINSTANCE","onSaveInstanceState called");
     }
 
 
@@ -364,6 +377,8 @@ public class MainActivity
 
 
     }
+
+
 
 
     protected void createLocationRequest() {
