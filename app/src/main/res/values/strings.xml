@@ -22,4 +22,13 @@
     <string name="tools_string">Tools</string>
     <string name="my_running_app_string">MyRunningApp</string>
     <string name="lock_string">Lock</string>
+    <string name="run_textview">Run # </string>
+    <string name="date_textview">Date: </string>
+    <string name="distanceh_textview">Distance: </string>
+    <string name="timeh_textview">Time: </string>
+    <string name="avgspeedh">Avg Speed: </string>
+    <string name="topspeedh">Top Speed:</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

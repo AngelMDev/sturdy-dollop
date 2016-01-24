@@ -94,15 +94,22 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="accuracy"
-                android:textSize="15sp"
+                android:textSize="10sp"
                 android:id="@+id/displayAccuracyTV" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="distance"
-                android:textSize="15sp"
+                android:textSize="10sp"
                 android:id="@+id/displayTeoDistanceTV" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="State"
+                android:textSize="10sp"
+                android:id="@+id/displaystateTV" />
 
 
             <TextView

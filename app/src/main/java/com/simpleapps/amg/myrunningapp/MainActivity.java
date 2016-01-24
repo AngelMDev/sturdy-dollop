@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,7 +25,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
@@ -34,7 +32,6 @@ import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListe
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-
 import java.util.Calendar;
 
 public class MainActivity
@@ -58,7 +55,7 @@ public class MainActivity
     TextView speedTextView;
     TextView accuracyTextView;
     TextView distanceTextView;
-    SQLiteDatabase historyDB = null;
+    TextView state;
     View topLevelLayout;
     double distance = 0;
     float maxSpeed = 0;
@@ -70,14 +67,12 @@ public class MainActivity
     float accuracy;
     Handler mHandler;
     Runnable runnable;
+    DBAdapter dbAdapter;
     //@TODO organize variables. distance isnt being reset, check if is running bfore trying to addEntry, maxspeed needs to be reset.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-
-        createApiInstance();
-        mGoogleApiClient.connect();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nav_draw);
 
@@ -85,8 +80,11 @@ public class MainActivity
         setSupportActionBar(toolbar);
 
         initializeComponents();
+        dbAdapter=new DBAdapter();
+        createApiInstance();
+        mGoogleApiClient.connect();
 
-        retrieveData(savedInstanceState);
+
 
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -100,9 +98,26 @@ public class MainActivity
 
         if (firstTime) {
             firstTime = false;
-            createDatabase();
+            dbAdapter.createDatabase(this);
 
         }
+    }
+
+    @Override
+    protected void onStop() {
+        saveSettings();
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                mGoogleApiClient, this);
+        if(runnable!=null)
+            mHandler.removeCallbacks(runnable);
+        super.onStop();
+    }
+
+    @Override
+    protected void onStart() {
+        createApiInstance();
+        mGoogleApiClient.connect();
+        super.onStart();
     }
 
     private void createApiInstance() {
@@ -117,13 +132,7 @@ public class MainActivity
 
 
     private void createDatabase() {
-        try {
-            historyDB = this.openOrCreateDatabase("HistoryDB", MODE_PRIVATE, null);
-            historyDB.execSQL("CREATE TABLE IF NOT EXISTS history " + "(id integer primary key, date DATATIME,time NCHAR,distance DOUBLE,max_speed FLOAT);");
-            //File database=getApplicationContext().getDatabasePath("HistoryDB");
-        } catch (Exception e) {
 
-        }
     }
 
     //@TODO move this to other class
@@ -149,9 +158,8 @@ public class MainActivity
         }
         String dateOfRun = hour + ":" + minute + "" + "  " + calendar.get(Calendar.DAY_OF_MONTH) + "/" +
                 month + "/" + calendar.get(Calendar.YEAR) + " ";
-
-
-        historyDB.execSQL("INSERT INTO history (date,time,distance,max_speed) VALUES ('" + dateOfRun + "','" + time + "','" + distance + "','" + maxSpeed + "');");
+        dbAdapter.createDatabase(this);
+        dbAdapter.addEntry("history2",dateOfRun,time,distance,maxSpeed,avgSpeed,0); //TODO change altchange with real value
     }
 
     MenuItem actionLock = null;
@@ -251,6 +259,7 @@ public class MainActivity
 
 
 
+
             if (accuracy < 20.0) {
                 if (isRunning) {
                     //TODO move trackDistance here
@@ -313,6 +322,7 @@ public class MainActivity
         accuracyTextView = (TextView) findViewById(R.id.displayAccuracyTV);
         distanceTextView = (TextView) findViewById(R.id.distanceTV);
         teoDistance = (TextView) findViewById(R.id.displayTeoDistanceTV);
+        state=(TextView)findViewById(R.id.displaystateTV);
     }
 
     @Override
@@ -321,18 +331,11 @@ public class MainActivity
         super.onSaveInstanceState(outState);
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
+        if(runnable!=null)
         mHandler.removeCallbacks(runnable);
-
     }
 
-    @Override
-    protected void onStop() {
-        saveSettings();
-        LocationServices.FusedLocationApi.removeLocationUpdates(
-                mGoogleApiClient, this);
-        mHandler.removeCallbacks(runnable);
-        super.onStop();
-    }
+
 
     protected void saveSettings() {
         SharedPreferences sp = getPreferences(Context.MODE_PRIVATE);
@@ -341,7 +344,6 @@ public class MainActivity
 
         spEditor.apply();
     }
-
     private void retrieveData(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             firstTime = savedInstanceState.getBoolean("firstTime");
@@ -395,33 +397,27 @@ public class MainActivity
     @Override
     public void onLocationChanged(Location location) {
         currentLocation = location;
-
-        Log.d("LOCATION", "onLocationChangedCalled");
         accuracyTextView.setText(String.valueOf(currentLocation.getAccuracy()));
         accuracy = currentLocation.getAccuracy();
         speed = currentLocation.getSpeed();
-        tempDistance = calculateDistance(currentLocation, mLastLocation);
-        teoDistance.setText(String.valueOf(tempDistance));
         calcMaxSpeed(speed);
         avgSpeed = distance / chronometer.getTimeElapsed();
 
-        String s = String.format("%.2f", distance);
+        String speedF=String.format("%.2f", speed);
+        speedTextView.setText(String.valueOf(speedF) + " m/s");
 
-        speedTextView.setText(String.valueOf(speed) + " m/s");
-        distanceTextView.setText(s + "m");
 
         if (accuracy < 10) {
             beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
             beginButton.setClickable(true);
         }
-
         if (accuracy > 20) {
             speedTextView.setText("- m/s");
             Toast.makeText(this, "GPS accuracy not enough", Toast.LENGTH_SHORT).show();
             beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGray));
             beginButton.setClickable(true);//TODO: set to false on release
-            mLastLocation = currentLocation;
         }
+
 
 
     }
@@ -434,35 +430,45 @@ public class MainActivity
             @Override
             public void run() {
                 calcDistance();
-                    mHandler.postDelayed(this, 1000);
+                    mHandler.postDelayed(this, 1500);
 
             }
-        };
-        mHandler.postDelayed(runnable, 1000);
+         };
+        mHandler.postDelayed(runnable, 1500);
+    }
 
+    private void delay() {
     }
 
     private void calcDistance() {
         if (currentLocation.hasSpeed()) {
-            if (tempDistance <= speed) {
-                distance += tempDistance;
+            tempDistance = currentLocation.distanceTo(mLastLocation);
+            mLastLocation = currentLocation;
+            teoDistance.setText(String.valueOf(tempDistance));
+            if (speed > 0) {
 
-            } else if (tempDistance <= (speed + DISTANCE_TOLERANCE) && tempDistance > speed) {
-                distance += speed;
-            } else if (tempDistance > speed + DISTANCE_TOLERANCE) {
-                distance += avgSpeed;
+
+                    distance += tempDistance;
+                    state.setText("Adding raw tempDistance");
+
+
+            } else {
+                state.setText("No Movement");
             }
 
+            teoDistance.setText(String.valueOf(tempDistance));
+            String s = String.format("%.2f", distance);
+            distanceTextView.setText(s + "m");
+
         }
-        teoDistance.setText(String.valueOf(tempDistance));
-        Toast.makeText(this, "Thread Running", Toast.LENGTH_SHORT).show();
+
+
     }
 
     private void calcMaxSpeed(float speed) {
         if (speed > maxSpeed) {
             maxSpeed = speed;
         }
-
     }
 
 
