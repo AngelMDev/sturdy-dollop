@@ -25,6 +25,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
@@ -32,6 +33,7 @@ import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListe
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+
 import java.util.Calendar;
 
 public class MainActivity
@@ -68,6 +70,7 @@ public class MainActivity
     Handler mHandler;
     Runnable runnable;
     DBAdapter dbAdapter;
+    protected DrawerLayout drawer;
     //@TODO organize variables. distance isnt being reset, check if is running bfore trying to addEntry, maxspeed needs to be reset.
 
     @Override
@@ -75,24 +78,17 @@ public class MainActivity
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nav_draw);
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         initializeComponents();
-        dbAdapter=new DBAdapter();
+        dbAdapter = new DBAdapter();
         createApiInstance();
         mGoogleApiClient.connect();
-
-
-
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
-
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
@@ -108,7 +104,7 @@ public class MainActivity
         saveSettings();
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
-        if(runnable!=null)
+        if (runnable != null)
             mHandler.removeCallbacks(runnable);
         super.onStop();
     }
@@ -159,7 +155,7 @@ public class MainActivity
         String dateOfRun = hour + ":" + minute + "" + "  " + calendar.get(Calendar.DAY_OF_MONTH) + "/" +
                 month + "/" + calendar.get(Calendar.YEAR) + " ";
         dbAdapter.createDatabase(this);
-        dbAdapter.addEntry("history2",dateOfRun,time,distance,maxSpeed,avgSpeed,0); //TODO change altchange with real value
+        dbAdapter.addEntry("history2", dateOfRun, time, distance, maxSpeed, avgSpeed, 0); //TODO change altchange with real value
     }
 
     MenuItem actionLock = null;
@@ -258,8 +254,6 @@ public class MainActivity
             trackDistance();
 
 
-
-
             if (accuracy < 20.0) {
                 if (isRunning) {
                     //TODO move trackDistance here
@@ -322,7 +316,7 @@ public class MainActivity
         accuracyTextView = (TextView) findViewById(R.id.displayAccuracyTV);
         distanceTextView = (TextView) findViewById(R.id.distanceTV);
         teoDistance = (TextView) findViewById(R.id.displayTeoDistanceTV);
-        state=(TextView)findViewById(R.id.displaystateTV);
+        state = (TextView) findViewById(R.id.displaystateTV);
     }
 
     @Override
@@ -331,19 +325,18 @@ public class MainActivity
         super.onSaveInstanceState(outState);
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
-        if(runnable!=null)
-        mHandler.removeCallbacks(runnable);
+        if (runnable != null)
+            mHandler.removeCallbacks(runnable);
     }
-
 
 
     protected void saveSettings() {
         SharedPreferences sp = getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor spEditor = sp.edit();
         spEditor.putBoolean("firstTime", firstTime);
-
         spEditor.apply();
     }
+
     private void retrieveData(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             firstTime = savedInstanceState.getBoolean("firstTime");
@@ -354,7 +347,6 @@ public class MainActivity
     @Override
     public void onConnected(Bundle bundle) {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
             } else {
@@ -402,11 +394,8 @@ public class MainActivity
         speed = currentLocation.getSpeed();
         calcMaxSpeed(speed);
         avgSpeed = distance / chronometer.getTimeElapsed();
-
-        String speedF=String.format("%.2f", speed);
+        String speedF = String.format("%.2f", speed);
         speedTextView.setText(String.valueOf(speedF) + " m/s");
-
-
         if (accuracy < 10) {
             beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
             beginButton.setClickable(true);
@@ -417,28 +406,22 @@ public class MainActivity
             beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGray));
             beginButton.setClickable(true);//TODO: set to false on release
         }
-
-
-
     }
-
 
 
     private void trackDistance() {
         mHandler = new Handler();
-         runnable = new Runnable() {
+        runnable = new Runnable() {
             @Override
             public void run() {
                 calcDistance();
-                    mHandler.postDelayed(this, 1500);
+                mHandler.postDelayed(this, 1000);
 
             }
-         };
-        mHandler.postDelayed(runnable, 1500);
+        };
+        mHandler.postDelayed(runnable, 1000);
     }
 
-    private void delay() {
-    }
 
     private void calcDistance() {
         if (currentLocation.hasSpeed()) {
@@ -446,23 +429,15 @@ public class MainActivity
             mLastLocation = currentLocation;
             teoDistance.setText(String.valueOf(tempDistance));
             if (speed > 0) {
-
-
-                    distance += tempDistance;
-                    state.setText("Adding raw tempDistance");
-
+                distance += tempDistance;
 
             } else {
-                state.setText("No Movement");
-            }
 
+            }
             teoDistance.setText(String.valueOf(tempDistance));
             String s = String.format("%.2f", distance);
             distanceTextView.setText(s + "m");
-
         }
-
-
     }
 
     private void calcMaxSpeed(float speed) {
@@ -478,8 +453,6 @@ public class MainActivity
         double y = (current.getLatitude() - last.getLatitude());
         return Math.sqrt(x * x + y * y) * R;
     }
-
-
 }
 //checkout https://github.com/mikepenz/MaterialDrawer
 //http://blog.sqisland.com/2015/01/partial-slidingpanelayout.html

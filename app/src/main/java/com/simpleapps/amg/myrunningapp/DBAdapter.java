@@ -25,23 +25,26 @@ public class DBAdapter {
         }
 
     }
+
     //TODO rename to openOrCreate and make it so the other methods accept context as a parameter so that this method doesnt have to be called in
     //...other classes
-    public void openDatabase(Context context){
+    public void openDatabase(Context context) {
         try {
-           // historyDB = context.openDatabase("HistoryDB", null, 0);
-        }catch(Exception e){
-            Log.d("DATABASE", "Database couldn't open. ERROR: "+e);
+            // historyDB = context.openDatabase("HistoryDB", null, 0);
+        } catch (Exception e) {
+            Log.d("DATABASE", "Database couldn't open. ERROR: " + e);
         }
     }
-    public void closeDatabase(){
+
+    public void closeDatabase() {
         try {
             historyDB.close();
-        }catch(Exception ignored){
+        } catch (Exception ignored) {
 
         }
 
     }
+
     public void createTable(String tableName) {
         historyDB.execSQL("CREATE TABLE IF NOT EXISTS " + tableName + " (id integer primary key, date DATATIME,time NCHAR,distance DOUBLE,max_speed FLOAT,avg_speed DOUBLE,alt_change FLOAT);");
     }
@@ -70,7 +73,7 @@ public class DBAdapter {
     }
 
     public ListAdapter getEntries(Context context, String parameter) {
-        Cursor cursor = historyDB.rawQuery("SELECT " + parameter + " FROM history2", null);
+        Cursor cursor = historyDB.rawQuery("SELECT * FROM history2" + parameter, null);
         ListAdapter listAdapter = null;
         int idColumn = cursor.getColumnIndex("id");
         int dateColumn = cursor.getColumnIndex("date");
@@ -108,14 +111,62 @@ public class DBAdapter {
             }
             while (cursor.moveToNext());
             cursor.close();
-            listAdapter = new HistoryAdapter(idArray,dateArray,timeArray,distanceArray,context);
+            listAdapter = new HistoryAdapter(idArray, dateArray, timeArray, distanceArray, context);
         }
         closeDatabase();
         return listAdapter;
     }
 
+    public List<String> getDetail(long idValue) {
+        Cursor cursor = historyDB.rawQuery("SELECT * FROM history2 WHERE id= " + idValue, null);
+        Log.d("DATABASE", "idValue: " + idValue);
+        int idColumn = cursor.getColumnIndex("id");
+        int dateColumn = cursor.getColumnIndex("date");
+        int timeColumn = cursor.getColumnIndex("time");
+        int distanceColumn = cursor.getColumnIndex("distance");
+        int maxSpeedColumn = cursor.getColumnIndex("max_speed");
+        int avgSpeedColumn = cursor.getColumnIndex("avg_speed");
+        int altChangeColumn = cursor.getColumnIndex("alt_change");
+        List<String> detailArray = new ArrayList<>();
 
-    public void deleteEntries() {
-        historyDB.execSQL("DELETE * FROM history2");
+        if (cursor.getCount()==1) {
+            cursor.moveToFirst();
+            String id = cursor.getString(idColumn);
+            String date = cursor.getString(dateColumn);
+            String time = cursor.getString(timeColumn);
+            String distance = cursor.getString(distanceColumn);
+            String maxSpeed = cursor.getString(maxSpeedColumn);
+            String avgSpeed = cursor.getString(avgSpeedColumn);
+            String altChange = cursor.getString(altChangeColumn);
+            detailArray.add(id);
+            detailArray.add(date);
+            detailArray.add(time);
+            detailArray.add(distance);
+            detailArray.add(maxSpeed);
+            detailArray.add(avgSpeed);
+            detailArray.add(altChange);
+        }
+        else{
+            Log.d("DATABASE","getCount="+cursor.getCount());
+        }
+        cursor.close();
+        closeDatabase();
+        return detailArray;
+    }
+
+
+    public void deleteEntries(String parameter) {
+        historyDB.execSQL("DELETE FROM history2 "+parameter);
+    }
+    public void reassignID(Context context){
+        createDatabase(context);
+        Cursor cursor = historyDB.rawQuery("SELECT id FROM history2",null);
+        int idColumn = cursor.getColumnIndex("id");
+        cursor.moveToFirst();
+        for(int i=1;i<=cursor.getCount();i++){
+            historyDB.execSQL("UPDATE history2 SET id="+i+" WHERE id="+cursor.getLong(idColumn));
+            cursor.moveToNext();
+        }
+        closeDatabase();
     }
 }
