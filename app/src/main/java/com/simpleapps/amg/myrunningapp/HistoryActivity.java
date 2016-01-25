@@ -138,9 +138,7 @@ public class HistoryActivity extends AppCompatActivity {
         runAvgSpeed = (TextView) findViewById(R.id.runAvgSpeedDetail);
         runAltChange = (TextView) findViewById(R.id.runAltChangeDetail);
     }
-/*If you want the listview to ever show the Run# sequentially even if an entry has been deleted, restructure de table in the
-database so that new IDs are applied in each row with a loop(i.e i=0;i<(number rows);i++...)
-*/
+
 
     //@TODO show entries more elegantly
     //@TODO convert to recyclerview, research how to add an onclick listener

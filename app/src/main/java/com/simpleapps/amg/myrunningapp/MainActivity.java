@@ -1,7 +1,9 @@
 package com.simpleapps.amg.myrunningapp;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -35,6 +37,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity
         extends AppCompatActivity
@@ -55,15 +58,12 @@ public class MainActivity
     int LOCATION_PERMISSION_CODE = 10;
     LocationRequest mLocationRequest;
     TextView speedTextView;
-    TextView accuracyTextView;
     TextView distanceTextView;
-    TextView state;
+    TextView runDateOV, runTimeOV, runDistanceOV, runAvgSpeedOV, runTopSpeedOV, runAltChangeOV;
     View topLevelLayout;
     double distance = 0;
     float maxSpeed = 0;
     double avgSpeed = 0;
-    int DISTANCE_TOLERANCE = 10;
-    TextView teoDistance;
     float speed;
     double tempDistance = 0;
     float accuracy;
@@ -71,7 +71,7 @@ public class MainActivity
     Runnable runnable;
     DBAdapter dbAdapter;
     protected DrawerLayout drawer;
-    //@TODO organize variables. distance isnt being reset, check if is running bfore trying to addEntry, maxspeed needs to be reset.
+    //@TODO organize variables. maxspeed needs to be reset.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +95,24 @@ public class MainActivity
             dbAdapter.createDatabase(this);
 
         }
+    }
+
+    private void initializeComponents() {
+        beginButton = (Button) findViewById(R.id.beginButton);
+        startButton = (Button) findViewById(R.id.startPauseButton);
+        stopButton = (Button) findViewById(R.id.stopButton);
+        topLevelLayout = findViewById(R.id.top_layout);
+        topLevelLayout.setVisibility(View.INVISIBLE);
+        viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
+        chronometer = (msChronometer) findViewById(R.id.dchronometer);
+        speedTextView = (TextView) findViewById(R.id.speedTV);
+        distanceTextView = (TextView) findViewById(R.id.distanceTV);
+        runDateOV = (TextView) findViewById(R.id.runDateDetail);
+        runTimeOV = (TextView) findViewById(R.id.runTimeDetail);
+        runDistanceOV = (TextView) findViewById(R.id.runDistanceDetail);
+        runAltChangeOV = (TextView) findViewById(R.id.runAltChangeDetail);
+        runAvgSpeedOV = (TextView) findViewById(R.id.runAvgSpeedDetail);
+        runTopSpeedOV = (TextView) findViewById(R.id.runTopSpeedDetail);
     }
 
     @Override
@@ -126,8 +144,6 @@ public class MainActivity
         super.onStop();
     }
 
-
-
     private void createApiInstance() {
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -136,11 +152,6 @@ public class MainActivity
                     .addApi(LocationServices.API)
                     .build();
         }
-    }
-
-
-    private void createDatabase() {
-
     }
 
     //@TODO move this to other class
@@ -168,6 +179,16 @@ public class MainActivity
                 month + "/" + calendar.get(Calendar.YEAR) + " ";
         dbAdapter.createDatabase(this);
         dbAdapter.addEntry("history2", dateOfRun, time, distance, maxSpeed, avgSpeed, 0); //TODO change altchange with real value
+        showRunOverview(dateOfRun, time, distance, maxSpeed, avgSpeed, 0);
+    }
+
+    private void showRunOverview(String dateOfrun, String time, double distance, float maxSpeed, double avgSpeed, double altChange) {
+        runDateOV.setText(dateOfrun);
+        runTimeOV.setText(time);
+        runDistanceOV.setText(String.valueOf(distance));
+        runTopSpeedOV.setText(String.valueOf(maxSpeed));
+        runAvgSpeedOV.setText(String.valueOf(avgSpeed));
+        runAltChangeOV.setText(String.valueOf(altChange));
     }
 
     MenuItem actionLock = null;
@@ -236,29 +257,44 @@ public class MainActivity
         viewFlipper.showPrevious();
     }
 
+    public void goNext() {
+        viewFlipper.setInAnimation(this, R.anim.slide_in_from_right);
+        viewFlipper.setOutAnimation(this, R.anim.slide_out_to_left);
+        viewFlipper.showNext();
+    }
+
     //user press back on running activity
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            goBack();
-            return true;
+            if (viewFlipper.getDisplayedChild() == 1) {
+                goBack();
+                return true;
+            } else if (viewFlipper.getDisplayedChild() == 2) {
+                viewFlipper.setDisplayedChild(0);
+                return true;
+            }
         }
 
         return super.onKeyDown(keyCode, event);
     }
 
+    boolean runBeenStarted = false;
+    boolean dialogPaused = false;
+
     //TODO move to msChronometer
     //handles when the user presses start
     public void startPauseRun(View view) {
         if (!isRunning) {
-
             if (!isPaused) {
                 chronometer.setBase(SystemClock.elapsedRealtime());
-                isPaused = false;
+
             } else if (isPaused) {
                 chronometer.setBase(SystemClock.elapsedRealtime() + (chronometer.getBase()) - timeStopped);
-                Log.d("Paused", "Paused");
+                isPaused = false;
             }
+            runBeenStarted = true;
             chronometer.start();
             startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialYellow));
             startButton.setText(R.string.pause_button);
@@ -285,22 +321,48 @@ public class MainActivity
     }
 
     //TODO move to msChronometer
-    public void stopRun(View view) {
-        if (chronometer.getTimeElapsed() > 0) {
-            addEntry(String.valueOf(chronometer.getTimeElapsed()));
+    public void stopRun(final View view) {
+        if (runBeenStarted) {
+            // if(distance>0) { // TODO: 1/25/2016  uncomment this on release
+            if (!isPaused) {
+                startPauseRun(view);
+                dialogPaused = true;
+            }
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.dialog_stop_run)
+                    .setPositiveButton(R.string.dialog_stop, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            if (chronometer.getTimeElapsed() > 0) {
+                                addEntry(formatChrono(chronometer.getTimeElapsed()));
+                            }
+                            chronometer.stop();
+                            mHandler.removeCallbacks(runnable);
+                            chronometer.setBase(SystemClock.elapsedRealtime());
+                            startButton.setBackgroundColor(ContextCompat.getColor(MainActivity.this, R.color.materialGreen));
+                            startButton.setText(R.string.start_button);
+                            isRunning = false;
+                            isPaused = false;
+                            maxSpeed = 0;
+                            distance = 0;
+                            runBeenStarted = false;
+                            distanceTextView.setText("0m");
+                            goNext();
+                        }
+                    })
+                    .setNegativeButton(R.string.dialog_cancel, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            if (dialogPaused) {
+                                startPauseRun(view);
+                                dialogPaused = false;
+                            }
+                        }
+                    })
+                    .show();
+            //  }
         }
-        chronometer.stop();
-        mHandler.removeCallbacks(runnable);
-        chronometer.setBase(SystemClock.elapsedRealtime());
-        startButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
-        startButton.setText(R.string.start_button);
-        isRunning = false;
-        isPaused = false;
-        maxSpeed = 0;
-        distance = 0;
-        distanceTextView.setText("0m");
-
     }
+
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -316,20 +378,19 @@ public class MainActivity
         return true;
     }
 
-    private void initializeComponents() {
-        beginButton = (Button) findViewById(R.id.beginButton);
-        startButton = (Button) findViewById(R.id.startPauseButton);
-        stopButton = (Button) findViewById(R.id.stopButton);
-        topLevelLayout = findViewById(R.id.top_layout);
-        topLevelLayout.setVisibility(View.INVISIBLE);
-        viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
-        chronometer = (msChronometer) findViewById(R.id.dchronometer);
-        speedTextView = (TextView) findViewById(R.id.speedTV);
-        accuracyTextView = (TextView) findViewById(R.id.displayAccuracyTV);
-        distanceTextView = (TextView) findViewById(R.id.distanceTV);
-        teoDistance = (TextView) findViewById(R.id.displayTeoDistanceTV);
-        state = (TextView) findViewById(R.id.displaystateTV);
+    private String formatChrono(long time) {
+
+        long hours = TimeUnit.MILLISECONDS.toHours(time);
+        time -= TimeUnit.HOURS.toMillis(TimeUnit.MILLISECONDS.toHours(time));
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(time);
+        time -= TimeUnit.MINUTES.toMillis(TimeUnit.MILLISECONDS.toMinutes(time));
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(time);
+        time -= TimeUnit.SECONDS.toMillis(TimeUnit.MILLISECONDS.toSeconds(time));
+        long milli = time;
+
+        return String.format("%02d:%02d:%02d:%02d", hours, minutes, seconds, milli);
     }
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -339,7 +400,7 @@ public class MainActivity
                 mGoogleApiClient, this);
         if (runnable != null)
             mHandler.removeCallbacks(runnable);
-        Log.d("ONSAVEINSTANCE","onSaveInstanceState called");
+        Log.d("ONSAVEINSTANCE", "onSaveInstanceState called");
     }
 
 
@@ -379,8 +440,6 @@ public class MainActivity
     }
 
 
-
-
     protected void createLocationRequest() {
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(2500);
@@ -404,7 +463,6 @@ public class MainActivity
     @Override
     public void onLocationChanged(Location location) {
         currentLocation = location;
-        accuracyTextView.setText(String.valueOf(currentLocation.getAccuracy()));
         accuracy = currentLocation.getAccuracy();
         speed = currentLocation.getSpeed();
         calcMaxSpeed(speed);
@@ -442,14 +500,12 @@ public class MainActivity
         if (currentLocation.hasSpeed()) {
             tempDistance = currentLocation.distanceTo(mLastLocation);
             mLastLocation = currentLocation;
-            teoDistance.setText(String.valueOf(tempDistance));
             if (speed > 0) {
                 distance += tempDistance;
 
             } else {
 
             }
-            teoDistance.setText(String.valueOf(tempDistance));
             String s = String.format("%.2f", distance);
             distanceTextView.setText(s + "m");
         }

@@ -33,9 +33,10 @@
     <string name="dialog_are_you_sure_delete_entries">Are you sure you want to <b>DELETE</b> all entries?</string>
     <string name="dialog_delete">Delete</string>
     <string name="dialog_cancel">Cancel</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="delete_entry">Delete this entry</string>
+    <string name="dialog_stop_run">Do you want to stop this run?</string>
+    <string name="dialog_stop">Stop</string>
+
 
 </resources>
