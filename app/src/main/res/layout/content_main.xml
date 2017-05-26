@@ -9,7 +9,6 @@
     android:paddingLeft="0dp"
     android:paddingRight="0dp"
     android:paddingTop="0dp"
-    android:background="@color/colorPrimaryDark"
     tools:context="com.simpleapps.amg.myrunningapp.MainActivity"
     tools:showIn="@layout/activity_nav_draw"
     android:weightSum="1"
@@ -54,7 +53,7 @@
                     android:layout_width="256dp"
                     android:layout_height="256dp"
                     android:contentDescription="@string/logo_img_string"
-                    android:src="@drawable/web_hi_res_512" />
+                    android:src="@drawable/my_icon" />
             </LinearLayout>
 
             <Button

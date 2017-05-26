@@ -11,6 +11,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -19,11 +20,13 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
@@ -40,7 +43,7 @@ import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity
-        extends AppCompatActivity
+        extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener, ConnectionCallbacks, OnConnectionFailedListener, LocationListener {
 
     Button beginButton;
@@ -70,15 +73,17 @@ public class MainActivity
     Handler mHandler;
     Runnable runnable;
     DBAdapter dbAdapter;
+    ImageView logo;
     String speedF;
     String distanceF;
     protected DrawerLayout drawer;
     //@TODO organize variables. maxspeed needs to be reset.
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_nav_draw);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -91,7 +96,7 @@ public class MainActivity
         toggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
+        setLogoTint();
 
         if (firstTime) {
             firstTime = false;
@@ -99,6 +104,14 @@ public class MainActivity
 
         }
     }
+
+    private void setLogoTint() {
+        TypedValue typedValue= new TypedValue();
+        getTheme().resolveAttribute(R.attr.colorPrimary, typedValue, true);
+        int color=typedValue.data;
+        logo.setColorFilter(color);
+    }
+
 
     private void initializeComponents() {
         beginButton = (Button) findViewById(R.id.beginButton);
@@ -116,6 +129,7 @@ public class MainActivity
         runAltChangeOV = (TextView) findViewById(R.id.runAltChangeDetail);
         runAvgSpeedOV = (TextView) findViewById(R.id.runAvgSpeedDetail);
         runTopSpeedOV = (TextView) findViewById(R.id.runTopSpeedDetail);
+        logo = (ImageView) findViewById(R.id.imgLogo);
     }
 
     @Override
@@ -377,7 +391,10 @@ public class MainActivity
         if (id == R.id.nav_history) {
             Intent openHistory = new Intent(this, HistoryActivity.class);
             startActivity(openHistory);
-
+        }
+        if (id == R.id.nav_settings) {
+            Intent openSettings = new Intent(this, SettingsActivity.class);
+            startActivity(openSettings);
         }
         return true;
     }

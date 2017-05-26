@@ -15,7 +15,7 @@
     <string name="start_button">Iniciar</string>
     <string name="pause_button">Pausar</string>
     <string name="title_activity_nav_draw">NavDraw</string>
-
+    <string name="prefs_theme_key">theme</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="history_string">Historial</string>
