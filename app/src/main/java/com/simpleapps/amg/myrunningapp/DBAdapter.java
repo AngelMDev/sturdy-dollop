@@ -54,7 +54,7 @@ public class DBAdapter {
         closeDatabase();
     }
 
-    public void addEntry(String tableName, String dateOfRun, String time, double distance, float maxSpeed, double avgSpeed, float altChange) {
+    public void addEntry(String tableName, String dateOfRun, String time, String distance, String maxSpeed, String avgSpeed, float altChange) {
         historyDB.execSQL("INSERT INTO " + tableName + " (date,time,distance,max_speed,avg_speed,alt_change) VALUES "
                 + "('"
                 + dateOfRun

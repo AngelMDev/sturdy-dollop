@@ -9,15 +9,23 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:theme="@style/ThemeOverlay.AppCompat.Dark">
+    android:theme="@style/ThemeOverlay.AppCompat.Dark"
+    android:weightSum="1">
 
 
+    <ImageView
+        android:layout_width="82dp"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/ic_launcher"
+        android:contentDescription="@string/logo_img_string"
+        android:layout_weight="0.40" />
 
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="217dp"
         android:layout_height="wrap_content"
         android:paddingTop="@dimen/nav_header_vertical_spacing"
         android:text="@string/my_running_app_string"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
 
 </LinearLayout>

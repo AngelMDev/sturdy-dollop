@@ -70,6 +70,8 @@ public class MainActivity
     Handler mHandler;
     Runnable runnable;
     DBAdapter dbAdapter;
+    String speedF;
+    String distanceF;
     protected DrawerLayout drawer;
     //@TODO organize variables. maxspeed needs to be reset.
 
@@ -89,6 +91,7 @@ public class MainActivity
         toggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
 
         if (firstTime) {
             firstTime = false;
@@ -157,7 +160,8 @@ public class MainActivity
     //@TODO move this to other class
     private void addEntry(String time) {
         Calendar calendar = Calendar.getInstance();
-        String month = "" + calendar.get(Calendar.MONTH) + 1;
+        int monthi=calendar.get(Calendar.MONTH)+1;
+        String month = "" + monthi;
         String hour;
         String minute;
         if (calendar.get(Calendar.HOUR_OF_DAY) < 10) {
@@ -170,25 +174,26 @@ public class MainActivity
         } else {
             minute = "" + calendar.get(Calendar.MINUTE);
         }
-        if (calendar.get(Calendar.MONTH) == 1) {
-            month = "0" + month;
-        } else {
-            month = "" + month;
-        }
+
         String dateOfRun = hour + ":" + minute + "" + "  " + calendar.get(Calendar.DAY_OF_MONTH) + "/" +
                 month + "/" + calendar.get(Calendar.YEAR) + " ";
         dbAdapter.createDatabase(this);
-        dbAdapter.addEntry("history2", dateOfRun, time, distance, maxSpeed, avgSpeed, 0); //TODO change altchange with real value
-        showRunOverview(dateOfRun, time, distance, maxSpeed, avgSpeed, 0);
+
+        String maxspeedF = String.format("%.2f", maxSpeed);
+
+        String avgSpeedF = String.format("%.2f", avgSpeed);
+        showRunOverview(dateOfRun, time, distanceF, maxspeedF, avgSpeedF, 0);
     }
 
-    private void showRunOverview(String dateOfrun, String time, double distance, float maxSpeed, double avgSpeed, double altChange) {
+    private void showRunOverview(String dateOfrun, String time, String distance, String maxSpeed, String avgSpeed, double altChange) {
         runDateOV.setText(dateOfrun);
         runTimeOV.setText(time);
-        runDistanceOV.setText(String.valueOf(distance));
-        runTopSpeedOV.setText(String.valueOf(maxSpeed));
-        runAvgSpeedOV.setText(String.valueOf(avgSpeed));
-        runAltChangeOV.setText(String.valueOf(altChange));
+        runDistanceOV.setText(distance+"m");
+        runTopSpeedOV.setText(maxSpeed+"m/s");
+        runAvgSpeedOV.setText(avgSpeed+"m/s");
+        runAltChangeOV.setText(String.valueOf(altChange)+"m");
+        dbAdapter.addEntry("history2", dateOfrun, time, distance, maxSpeed, avgSpeed, 0); //TODO change altchange with real value
+
     }
 
     MenuItem actionLock = null;
@@ -333,6 +338,7 @@ public class MainActivity
                     .setPositiveButton(R.string.dialog_stop, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             if (chronometer.getTimeElapsed() > 0) {
+                                avgSpeed = distance / chronometer.getTimeElapsed();
                                 addEntry(formatChrono(chronometer.getTimeElapsed()));
                             }
                             chronometer.stop();
@@ -372,8 +378,6 @@ public class MainActivity
             Intent openHistory = new Intent(this, HistoryActivity.class);
             startActivity(openHistory);
 
-        } else if (id == R.id.nav_manage) {
-
         }
         return true;
     }
@@ -388,7 +392,7 @@ public class MainActivity
         time -= TimeUnit.SECONDS.toMillis(TimeUnit.MILLISECONDS.toSeconds(time));
         long milli = time;
 
-        return String.format("%02d:%02d:%02d:%02d", hours, minutes, seconds, milli);
+        return String.format("%02dh:%02dm:%02ds:%02dms", hours, minutes, seconds, milli);
     }
 
 
@@ -466,8 +470,7 @@ public class MainActivity
         accuracy = currentLocation.getAccuracy();
         speed = currentLocation.getSpeed();
         calcMaxSpeed(speed);
-        avgSpeed = distance / chronometer.getTimeElapsed();
-        String speedF = String.format("%.2f", speed);
+        speedF = String.format("%.2f", speed);
         speedTextView.setText(String.valueOf(speedF) + " m/s");
         if (accuracy < 10) {
             beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGreen));
@@ -475,7 +478,7 @@ public class MainActivity
         }
         if (accuracy > 20) {
             speedTextView.setText("- m/s");
-            Toast.makeText(this, "GPS accuracy not enough", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Obteniendo señal GPS...", Toast.LENGTH_SHORT).show();
             beginButton.setBackgroundColor(ContextCompat.getColor(this, R.color.materialGray));
             beginButton.setClickable(true);//TODO: set to false on release
         }
@@ -497,17 +500,17 @@ public class MainActivity
 
 
     private void calcDistance() {
-        if (currentLocation.hasSpeed()) {
+        if (currentLocation.hasSpeed()&isPaused==false&isRunning==true) {
             tempDistance = currentLocation.distanceTo(mLastLocation);
             mLastLocation = currentLocation;
-            if (speed > 0) {
+            if (speed > 0) { //@TODO check on this
                 distance += tempDistance;
 
             } else {
 
             }
-            String s = String.format("%.2f", distance);
-            distanceTextView.setText(s + "m");
+            distanceF = String.format("%.2f", distance);
+            distanceTextView.setText(distanceF + "m");
         }
     }
 

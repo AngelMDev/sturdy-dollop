@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.simpleapps.amg.myrunningapp.MainActivity">
 
+
     <item
         android:id="@+id/action_lock"
         android:orderInCategory="101"
