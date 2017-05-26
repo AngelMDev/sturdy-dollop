@@ -3,7 +3,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="com.simpleapps.amg.myrunningapp.HistoryActivity">
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/history_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
     <ViewFlipper
         android:id="@+id/historyViewFlipper"
@@ -246,7 +255,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:text="0.0 m/s"
-                    android:id="@+id/runTopSpeedDetail"
+                    android:id="@+id/runDistanceDetail"
                     android:paddingTop="5dp"
                     android:paddingLeft="5dp"
                     android:paddingRight="5dp"
