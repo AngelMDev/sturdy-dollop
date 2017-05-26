@@ -3,11 +3,36 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorPrimary">@color/colorAccent</item>
+        <item name="colorPrimaryDark">@color/colorAltDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:textColor">@color/colorPrimary</item>
+        <item name="android:windowBackground">@color/colorPrimaryDark</item>
+        <item name="android:colorForeground">@color/white</item>
     </style>
+
+    <style name="BlueWhite" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+
+        <item name="colorPrimary">@color/blueComp</item>
+        <item name="colorPrimaryDark">@color/white</item>
+        <item name="colorAccent">@color/blueComp</item>
+        <item name="android:colorBackground">@android:color/background_light</item>
+    </style>
+
+    <style name="RedBlack" parent="Theme.AppCompat.NoActionBar">
+        <!-- Customize your theme here. -->
+
+        <item name="colorPrimary">@color/materialRed</item>
+        <item name="colorPrimaryDark">@color/colorPrimary</item>
+        <item name="colorAccent">@color/materialRed</item>
+        <item name="android:windowBackground">@color/colorPrimaryDark</item>
+        <item name="android:colorForeground">@color/white</item>
+
+    </style>
+
+
+
+
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -15,9 +40,17 @@
     </style>
 
 
-
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="GreenWhite" parent="Theme.AppCompat.Light.NoActionBar" >
+        <item name="colorPrimary">@color/materialGreen</item>
+    </style>
+
+    <style name="GreenBlack" parent="Theme.AppCompat.NoActionBar" >
+        <item name="colorPrimary">@color/materialGreen</item>
+        <item name="colorAccent">@color/materialGreen</item>
+    </style>
 
 </resources>

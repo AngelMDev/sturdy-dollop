@@ -28,14 +28,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".HistoryActivity" />
-        <activity
-            android:name=".SettingsActivity"
-            android:label="@string/title_activity_settings"
-            android:parentActivityName=".MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.simpleapps.amg.myrunningapp.MainActivity" />
-        </activity>
+        <activity android:name=".SettingsActivity"></activity>
     </application>
 
 </manifest>
