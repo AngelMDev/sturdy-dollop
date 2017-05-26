@@ -3,6 +3,9 @@ package com.simpleapps.amg.myrunningapp;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
@@ -19,6 +22,8 @@ public class SettingsActivity extends BaseActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.settings_toolbar);
+        setSupportActionBar(myToolbar);
         radioGroup=(RadioGroup) findViewById(R.id.radio_group);
         button=(Button) findViewById(R.id.button2);
         button.setOnClickListener(new View.OnClickListener() {
@@ -31,6 +36,27 @@ public class SettingsActivity extends BaseActivity {
             }
         });
     }
+
+    MenuItem actionGoHome;
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.settings_menu, menu);
+
+        actionGoHome = menu.findItem(R.id.go_home);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if(id==R.id.go_home){
+            finish();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
 
     private void switchTheme() {
         switch (selectedID)

@@ -117,8 +117,8 @@ public class MainActivity
         beginButton = (Button) findViewById(R.id.beginButton);
         startButton = (Button) findViewById(R.id.startPauseButton);
         stopButton = (Button) findViewById(R.id.stopButton);
-        topLevelLayout = findViewById(R.id.top_layout);
-        topLevelLayout.setVisibility(View.INVISIBLE);
+    //    topLevelLayout = findViewById(R.id.top_layout);
+    //    topLevelLayout.setVisibility(View.INVISIBLE);
         viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
         chronometer = (msChronometer) findViewById(R.id.dchronometer);
         speedTextView = (TextView) findViewById(R.id.speedTV);
@@ -388,6 +388,9 @@ public class MainActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         int id = item.getItemId();
 
+        if (id == R.id.nav_homey) {
+            recreate();
+        }
         if (id == R.id.nav_history) {
             Intent openHistory = new Intent(this, HistoryActivity.class);
             startActivity(openHistory);

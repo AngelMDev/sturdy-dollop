@@ -14,7 +14,7 @@
     android:weightSum="1"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     android:transitionGroup="false">
-<!-- -->
+    <!-- -->
     <ViewFlipper
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -400,17 +400,5 @@
         </ScrollView>
 
     </ViewFlipper>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#be616161"
-        android:id="@+id/top_layout">
-
-        <!--Put the parts of the layout here,
-        what should be on top of your activity-->
-
-    </LinearLayout>
 
 </FrameLayout>

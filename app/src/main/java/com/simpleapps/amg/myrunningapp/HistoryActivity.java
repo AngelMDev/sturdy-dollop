@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +34,8 @@ public class HistoryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_history);
         dbAdapter = new DBAdapter();
         initializeUI();
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.history_toolbar);
+        setSupportActionBar(myToolbar);
         getEntries(GET_ALL);
         historyListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -82,6 +85,7 @@ public class HistoryActivity extends AppCompatActivity {
 
     MenuItem actionDeleteAll = null;
     MenuItem actionDeleteEntry=null;
+    MenuItem actionGoHome=null;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -89,6 +93,7 @@ public class HistoryActivity extends AppCompatActivity {
         actionDeleteAll = menu.findItem(R.id.action_delete_all);
         actionDeleteEntry=menu.findItem(R.id.action_delete_detail);
         actionDeleteEntry.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        actionGoHome = menu.findItem(R.id.go_home);
         actionDeleteAll.setVisible(true);
         actionDeleteEntry.setVisible(false);
         return true;
@@ -123,6 +128,8 @@ public class HistoryActivity extends AppCompatActivity {
             dbAdapter.reassignID(this);
             getEntries(GET_ALL);
             showPrev();
+        }else if(id==R.id.go_home){
+            finish();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -134,7 +141,7 @@ public class HistoryActivity extends AppCompatActivity {
         runDate = (TextView) findViewById(R.id.runDateDetail);
         runTime = (TextView) findViewById(R.id.runTimeDetail);
         runDistance = (TextView) findViewById(R.id.runDistanceDetail);
-        runMaxSpeed = (TextView) findViewById(R.id.runTopSpeedDetail);
+        runMaxSpeed = (TextView) findViewById(R.id.runDistanceDetail);
         runAvgSpeed = (TextView) findViewById(R.id.runAvgSpeedDetail);
         runAltChange = (TextView) findViewById(R.id.runAltChangeDetail);
     }

@@ -9,29 +9,33 @@
         android:layout_height="match_parent">
 
         <TextView
+            android:id="@+id/textViewId"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/textViewId"
-            android:text="@string/run_textview"/>
+            android:text="@string/run_textview"
+            android:textSize="18sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/idRow"
             android:text="0"
-            android:gravity="center"/>
+            android:gravity="center"
+            android:textSize="18sp"/>
         <Space
             android:layout_width="5dp"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textViewDistance"
-            android:text="@string/distanceh_textview" />
+            android:text="@string/distanceh_textview"
+            android:textSize="18sp"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/distanceRow"
-            android:text="0000m" />
+            android:text="0000m"
+            android:textSize="18sp"/>
         <Space
             android:layout_width="5dp"/>
 
@@ -46,12 +50,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textViewDate"
-            android:text="@string/date_textview"/>
+            android:text="@string/date_textview"
+            android:textSize="18sp"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/dateRow"
-            android:text="01/01/2016"/>
+            android:text="01/01/2016"
+            android:textSize="18sp"/>
         <Space
             android:layout_width="5dp"/>
 
@@ -59,12 +65,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textViewTime"
-            android:text="@string/timeh_textview" />
+            android:text="@string/timeh_textview"
+            android:textSize="18sp"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/timeRow"
-            android:text="0000s" />
+            android:text="0000s"
+            android:textSize="18sp"/>
 
     </TableRow>
 
